@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Archives
+*.zip
+
+# Certificates are unique to each zet init
+*.pem
+
+# unused folder
+app/js/unused
+out/

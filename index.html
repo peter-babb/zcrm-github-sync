@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Zoho Script Sync</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0d1117;
+            color: #e6edf3;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 32px;
+            width: 100%;
+            max-width: 460px;
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #f0f6fc;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #8b949e;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #e6edf3;
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+
+        input:focus { border-color: #388bfd; }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #btn-auth {
+            background: #238636;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        #btn-sync {
+            background: #1f6feb;
+            color: #fff;
+        }
+
+        .status {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .status.info    { background: #1c2d3f; border: 1px solid #388bfd; color: #79c0ff; display: block; }
+        .status.success { background: #1a2e22; border: 1px solid #2ea043; color: #56d364; display: block; }
+        .status.error   { background: #2d1b1b; border: 1px solid #f85149; color: #ff7b72; display: block; }
+
+        .device-code {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            text-align: center;
+            margin: 8px 0;
+            color: #f0f6fc;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🐙 Zoho Script Sync</h1>
+
+        <label>Repo Name</label>
+        <input id="repo-name" type="text" placeholder="e.g. zoho-scripts" />
+
+        <label>Account Name</label>
+        <input id="account-name" type="text" placeholder="e.g. Objective Financial Partners" />
+
+        <button id="btn-auth">Connect GitHub Account</button>
+        <button id="btn-sync" disabled>Sync Scripts to Repo</button>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        let deviceCode = null;
+        let authed = false;
+
+        const statusEl = document.getElementById('status');
+        const btnAuth  = document.getElementById('btn-auth');
+        const btnSync  = document.getElementById('btn-sync');
+
+        function setStatus(msg, type = 'info')
+        {
+            statusEl.className = `status ${type}`;
+            statusEl.innerHTML = msg;
+        }
+
+        // --- Step 1: Start device flow ---
+        btnAuth.addEventListener('click', async () =>
+        {
+            btnAuth.disabled = true;
+            setStatus('Starting GitHub authentication...', 'info');
+
+            try
+            {
+                const { userCode, verificationUri } = await window.api.startOAuth();
+
+                setStatus(`
+                    Go to <strong><a href="${verificationUri}" target="_blank">${verificationUri}</a></strong> and enter this code:
+                    <div class="device-code">${userCode}</div>
+                    Waiting for authorization...
+                `, 'info');
+
+                // Step 2: Poll for token
+                const result = await window.api.pollOAuth(deviceCode);
+                if (result.success)
+                {
+                    authed = true;
+                    btnSync.disabled = false;
+                    setStatus('✅ GitHub connected! Fill in the form and click Sync.', 'success');
+                }
+            }
+            catch (err)
+            {
+                setStatus(`Authentication failed: ${err.message}`, 'error');
+                btnAuth.disabled = false;
+            }
+        });
+
+        // --- Step 3: Sync ---
+        btnSync.addEventListener('click', async () =>
+        {
+            const repoName    = document.getElementById('repo-name').value.trim();
+            const accountName = document.getElementById('account-name').value.trim();
+
+            if (!repoName || !accountName)
+            {
+                setStatus('Please fill in both fields.', 'error');
+                return;
+            }
+
+            btnSync.disabled = true;
+            setStatus('Syncing scripts to GitHub...', 'info');
+
+            const result = await window.api.syncToGithub({ repoName, accountName });
+
+            if (result.success)
+            {
+                setStatus('✅ Scripts synced successfully!', 'success');
+            }
+            else
+            {
+                setStatus(`Error: ${result.error}`, 'error');
+            }
+
+            btnSync.disabled = false;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "zcrm-github-sync",
+  "version": "1.0.0",
+  "description": "Sync Zoho scripts to GitHub",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "@octokit/request": "^8.0.0"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0"
+  }
+}

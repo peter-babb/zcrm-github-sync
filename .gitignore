@@ -10,3 +10,6 @@ node_modules/
 # unused folder
 app/js/unused
 out/
+
+#environment file
+.env

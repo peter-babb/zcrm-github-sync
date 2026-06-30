@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Zoho Script Sync</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -25,6 +30,8 @@
             padding: 32px;
             width: 100%;
             max-width: 460px;
+            overflow: scroll;
+            height: 90vh;
         }
 
         h1 {
@@ -32,16 +39,46 @@
             font-weight: 600;
             margin-bottom: 24px;
             color: #f0f6fc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky
         }
 
-        label {
+        label,
+        span {
             display: block;
             font-size: 13px;
             color: #8b949e;
             margin-bottom: 6px;
         }
 
-        input {
+        .help {
+            font-size: 11px;
+        }
+
+        p {
+            margin: 20px 0;
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        #help-button {
+            content: '?';
+            display: inline-block;
+            border: 1px solid #30363d;
+            border-radius: 20px;
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+            /* color: #f0f6fc; */
+            font-size: 18px;
+        }
+
+        input,
+        textarea,
+        select {
             width: 100%;
             padding: 8px 12px;
             background: #0d1117;
@@ -51,9 +88,24 @@
             font-size: 14px;
             margin-bottom: 16px;
             outline: none;
+            resize: none;
         }
 
-        input:focus { border-color: #388bfd; }
+        select:has(option[value='placeholder']:checked) {
+            color: #797979;
+        }
+
+        a {
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 15px;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #388bfd;
+        }
 
         button {
             width: 100%;
@@ -66,7 +118,11 @@
             transition: opacity 0.15s;
         }
 
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
 
         #btn-auth {
             background: #238636;
@@ -87,9 +143,26 @@
             display: none;
         }
 
-        .status.info    { background: #1c2d3f; border: 1px solid #388bfd; color: #79c0ff; display: block; }
-        .status.success { background: #1a2e22; border: 1px solid #2ea043; color: #56d364; display: block; }
-        .status.error   { background: #2d1b1b; border: 1px solid #f85149; color: #ff7b72; display: block; }
+        .status.info {
+            background: #1c2d3f;
+            border: 1px solid #388bfd;
+            color: #79c0ff;
+            display: block;
+        }
+
+        .status.success {
+            background: #1a2e22;
+            border: 1px solid #2ea043;
+            color: #56d364;
+            display: block;
+        }
+
+        .status.error {
+            background: #2d1b1b;
+            border: 1px solid #f85149;
+            color: #ff7b72;
+            display: block;
+        }
 
         .device-code {
             font-size: 22px;
@@ -101,15 +174,41 @@
         }
     </style>
 </head>
+
 <body>
     <div class="card">
-        <h1>🐙 Zoho Script Sync</h1>
+        <h1>Zoho Script Sync <span id="help-button">?</span></h1>
+        <p style="display: none;" id="help-video">
+            <video src="./video/Get All CRM Functions _ [HTS] Hero Documentation - 14 March 2024.mp4" controls
+                loading="lazy" preload="none" width="400">
+            </video>
+        </p>
 
-        <label>Repo Name</label>
-        <input id="repo-name" type="text" placeholder="e.g. zoho-scripts" />
+        <label for="">Organization</label>
+        <select name="org-select" id="org-select" disabled>
+            <option value="placeholder" selected>Connect GitHub Account</option>
+        </select>
 
         <label>Account Name</label>
-        <input id="account-name" type="text" placeholder="e.g. Objective Financial Partners" />
+        <input id="account-name" type="text" placeholder="e.g. Account Name as it is in CRM" />
+
+        <label>CRM Org ID</label>
+        <input id="crm-org-id" type="text" placeholder="Ensure this matches the org for the selected account" />
+
+        <label>Cookie</label>
+        <textarea id="cookie" placeholder="" rows="5"></textarea>
+
+        <label>X-Zcsrf-Token</label>
+        <input id="x-zcsrf-token" type="text" placeholder="" />
+
+        <label>User-Agent</label>
+        <input id="user-agent" type="text" placeholder="" />
+
+        <label>Domain
+            <br />
+            <span class="help">if the client is on a different domain, ex. crm.zohocloud.ca, set that here</span>
+        </label>
+        <input id="domain" type="text" value="crm.zoho.com" />
 
         <button id="btn-auth">Connect GitHub Account</button>
         <button id="btn-sync" disabled>Sync Scripts to Repo</button>
@@ -122,16 +221,32 @@
         let authed = false;
 
         const statusEl = document.getElementById('status');
-        const btnAuth  = document.getElementById('btn-auth');
-        const btnSync  = document.getElementById('btn-sync');
+        const btnAuth = document.getElementById('btn-auth');
+        const btnSync = document.getElementById('btn-sync');
+        const videoHelp = document.getElementById('help-button');
+
+        videoHelp.addEventListener('click', function ()
+        {
+            const container = document.getElementById('help-video');
+            if (container.style.display === "none")
+            {
+                container.style.display = "block";
+                videoHelp.innerHTML = '&#215;';
+            }
+            else
+            {
+                container.style.display = "none";
+                videoHelp.innerHTML = '?';
+            }
+        });
 
         function setStatus(msg, type = 'info')
         {
             statusEl.className = `status ${type}`;
             statusEl.innerHTML = msg;
         }
-
-        // --- Step 1: Start device flow ---
+        window.api.onStatusUpdate(setStatus);
+        // --- Start device flow ---
         btnAuth.addEventListener('click', async () =>
         {
             btnAuth.disabled = true;
@@ -139,7 +254,7 @@
 
             try
             {
-                const { userCode, verificationUri } = await window.api.startOAuth();
+                const { userCode, verificationUri, deviceCode } = await window.api.startOAuth();
 
                 setStatus(`
                     Go to <strong><a href="${verificationUri}" target="_blank">${verificationUri}</a></strong> and enter this code:
@@ -147,13 +262,45 @@
                     Waiting for authorization...
                 `, 'info');
 
-                // Step 2: Poll for token
+                // Poll for token
                 const result = await window.api.pollOAuth(deviceCode);
                 if (result.success)
                 {
                     authed = true;
+
+
+                    const orgResp = await window.api.getUserOrgs();
+                    const orgs = orgResp.orgs;
+                    const orgOptions = [
+                        ...orgs.map(org => ({
+                            label: `${org.login} - ${org.GITHUB_ENDPOINT == "GET /user" ? 'user' : 'org'}`,
+                            value: `${org.login} - ${org.GITHUB_ENDPOINT == "GET /user" ? 'user' : 'org'}`
+                        }))
+                    ];
+
+                    const select = document.getElementById('org-select');
+                    select.innerHTML = '';
+
+                    const placeholder = document.createElement('option');
+                    placeholder.value = 'placeholder';
+                    placeholder.textContent = 'Select GitHub Org';
+                    placeholder.classList.add('placeholder');
+                    placeholder.disabled = true;
+                    select.appendChild(placeholder);
+
+                    for (const opt of orgOptions)
+                    {
+                        const optionEl = document.createElement('option');
+                        optionEl.value = opt.value;
+                        optionEl.textContent = opt.label;
+                        select.appendChild(optionEl);
+                    }
+
+                    select.disabled = false;
                     btnSync.disabled = false;
+
                     setStatus('✅ GitHub connected! Fill in the form and click Sync.', 'success');
+
                 }
             }
             catch (err)
@@ -166,19 +313,35 @@
         // --- Step 3: Sync ---
         btnSync.addEventListener('click', async () =>
         {
-            const repoName    = document.getElementById('repo-name').value.trim();
             const accountName = document.getElementById('account-name').value.trim();
+            const crmOrgId = document.getElementById('crm-org-id').value.trim();
+            const cookie = document.getElementById('cookie').value.trim();
+            const xZcsrfToken = document.getElementById('x-zcsrf-token').value.trim();
+            const userAgent = document.getElementById('user-agent').value.trim();
+            const domain = document.getElementById('domain').value.trim();
+            const org = document.getElementById('org-select').value.trim();
 
-            if (!repoName || !accountName)
+            const testData = {
+                accountName: "Awana",
+                crmOrgId: 750847093,
+                xZcsrfToken: 'crmcsrfparam=fe6d020df13e9ee90fd07b35406cd460d342efc82dcd32207a7ac1f32324bfca4c4763e2ed002873edbdcc188538eea90370f7acab6e1e02e15f4a4410459a5e',
+                userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
+                domain: 'crm.zoho.com',
+                cookie: 'zohocares-_zldp=YfEOFpfOAG9uKmFpPRNjf%2FmVoL15EgThb%2BIAI42ixMZgVh29C9HO3TkcmKpRQj0SIj4rSgMsqp4%3D; zohocares-_uuid=4a3badaa-b2a4-4c13-90b0-a2f1180d5ce9_c625; siq1.zohocares-_zldp=dMx6e5HtWrXcjdRwQg3Z0o4P1kZFi0Pm2LScUVS7wsCMM4dvtiZgsxbLZhKdkK4j1qgMATQ2X5I%3D; siq1.zohocares-_uuid=724d25a6-9a52-416e-bea3-f376da60c2d4_a345; siq1.zohocares-_zldp=dMx6e5HtWrXcjdRwQg3Z0o4P1kZFi0Pm2LScUVS7wsCMM4dvtiZgsxbLZhKdkK4j1qgMATQ2X5I%3D; siq1.zohocares-_zldt=5a2dd3e2-29a8-4ce7-a41c-831660b702d6-1; zalb_6e4b8efee4=4e1c572f03d60d67bb8561b3ace770f8; ZohoMarkRef="https://www.zoho.com/crm/"; ZohoMarkSrc="direct:crm|direct:crm|direct:crm"; zps-tgr-dts=sc%3D10-expAppOnNewSession%3D%5B%5D-pc%3D1-sesst%3D1781201605620; __Secure-iamsdt=0.EnQSMAMQikmRj9hHHD9aYUEzBX9efYChfuV9R2c7cs6aG3CnIhMSC588XEATJ710Xg7pnRpA_2UcyEAS4Yvuyjxxp1J6KuisRYwbsvQiISC_tx1yErkCjUz7Z-Q3d1G59VTiwM4LMJSdj4AtTK4Yaxyzoj2XhiCpz_Hs4oLDyCEqdBIwAxCKSZGP2EccP1phQTMFf159gKF-5X1HZztyzpobcKciExILnzxcQBMnvXReDumdGkD_ZRzIQBLhi-7KPHGnUnoq6KxFjBuy9CIhIL-3HXISuQKNTPtn5Dd3Ubn1VOLAzgswlJ2PgC1MrhhrHLOiPZeG; _iamadt=03108a49918fd8471c3f5a614133057f5e7d80a17ee57d47673b72ce9a1b70a72213120b9f3c5c401327bd745e0ee99d; _iambdt=ff651cc84012e18beeca3c71a7527a2ae8ac458c1bb2f4222120bfb71d7212b9028d4cfb67e4377751b9f554e2c0ce0b30949d8f802d4cae186b1cb3a23d9786; crmcsr=fe6d020df13e9ee90fd07b35406cd460d342efc82dcd32207a7ac1f32324bfca4c4763e2ed002873edbdcc188538eea90370f7acab6e1e02e15f4a4410459a5e; group_name=usergroup3; zalb_dd6072214d=c4f641b5fc0c6aef61b6f50adab32da0; zalb_8b7213828d=4ac63b362811c7fbc0e984656c5e4aff; CSRF_TOKEN=fe6d020df13e9ee90fd07b35406cd460d342efc82dcd32207a7ac1f32324bfca4c4763e2ed002873edbdcc188538eea90370f7acab6e1e02e15f4a4410459a5e; siq1.zohocares-_zldt=5a2dd3e2-29a8-4ce7-a41c-831660b702d6-1; zalb_3309580ed5=151b34e5142175e5024c18055cece0f8; CT_CSRF_TOKEN=fe6d020df13e9ee90fd07b35406cd460d342efc82dcd32207a7ac1f32324bfca4c4763e2ed002873edbdcc188538eea90370f7acab6e1e02e15f4a4410459a5e; wms-tkp-token=35888761-0834f803-00318874c8d16d4ba38a54857375f416; CROSSCDNID=c6e6492411ca59352e03aba1c23c9a61eab2cfef66d4f68fc41a51a99bd3a756913d8f1646d416ed2c0794d631a265a3; CROSSCDNCOUNTRY=CA; JSESSIONID=BF3B6C4B8F069A438400B50CE5547F9D; zalb_zid=750847093; drecn=fe6d020df13e9ee90fd07b35406cd460d342efc82dcd32207a7ac1f32324bfca4c4763e2ed002873edbdcc188538eea90370f7acab6e1e02e15f4a4410459a5e; showEditorLeftPane=undefined',
+                org: 'herocrm - org'
+            }
+            // const { accountName, crmOrgId, cookie, xZcsrfToken, userAgent, domain, org } = testData;
+            if (!accountName || !crmOrgId || !cookie || !xZcsrfToken || !userAgent || !domain || !org || org == "placeholder")
             {
-                setStatus('Please fill in both fields.', 'error');
+                setStatus('Please fill in all fields.', 'error');
                 return;
             }
 
             btnSync.disabled = true;
-            setStatus('Syncing scripts to GitHub...', 'info');
+            // setStatus('Syncing scripts to GitHub...', 'info');
 
-            const result = await window.api.syncToGithub({ repoName, accountName });
+
+            const result = await window.api.syncToGithub({ accountName, crmOrgId, cookie, xZcsrfToken, userAgent, domain, org });
 
             if (result.success)
             {
@@ -193,4 +356,5 @@
         });
     </script>
 </body>
+
 </html>

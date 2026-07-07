@@ -5,13 +5,33 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
   },
   "dependencies": {
     "@octokit/request": "^8.0.0",
     "dotenv": "^17.4.2"
   },
   "devDependencies": {
-    "electron": "^29.0.0"
+    "electron": "^29.0.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.yourname.zohoscriptsync",
+    "productName": "Zoho CRM Function Backup",
+    "files": [
+      "**/*",
+      "!node_modules/.cache"
+    ],
+    "mac": {
+      "target": "dmg",
+      "category": "public.app-category.developer-tools",
+      "icon": "build/Hero_Favicon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/Hero_Favicon.png"
+    }
   }
 }

@@ -1,7 +1,8 @@
 // OAuth device flow for GitHub
 // Docs: https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#device-flow
 
-const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+//const CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const CLIENT_ID = "Ov23lim9lYuVIOBBBRnF";
 const SCOPE = 'repo';
 
 // Step 1: Request device & user codes from GitHub

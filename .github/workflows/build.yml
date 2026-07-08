@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - name: Create .env
+        run: echo "GITHUB_CLIENT_ID=${{ vars.GH_CLIENT_ID }}" >> .env
+        shell: bash
       - run: npm run build:win
       - uses: actions/upload-artifact@v4
         with:

@@ -13,3 +13,6 @@ out/
 
 #environment file
 .env
+
+# distrobution folder and contents
+dist/*

@@ -7,7 +7,7 @@
   "scripts": {
     "start": "electron .",
     "build:mac": "electron-builder --mac",
-    "build:win": "electron-builder --win"
+    "build:win": "electron-builder --win --publish never"
   },
   "dependencies": {
     "@octokit/request": "^8.0.0",

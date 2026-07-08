@@ -1,0 +1,30 @@
+name: Build Mac App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          echo "Current directory:"
+          pwd
+          echo "Files:"
+          ls -la
+          echo "package.json contents:"
+          cat package.json
+        shell: bash
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Create .env
+        run: echo "GITHUB_CLIENT_ID=${{ vars.GH_CLIENT_ID }}" >> .env
+        shell: bash
+      - run: npm run build:mac -- --publish never
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mac-build
+          path: dist/*.dmg

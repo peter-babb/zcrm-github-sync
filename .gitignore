@@ -16,3 +16,6 @@ out/
 
 # distrobution folder and contents
 dist/*
+
+#
+.DS_Store
